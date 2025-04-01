@@ -1,0 +1,8 @@
+## Interface: 100200
+## Title: AutoKeybinder
+## Notes: Automatically sets up keybindings based on CSV data
+## Author: Rafael Framil
+## Version: 1.0.0
+## SavedVariables: KeybindAddonDB
+
+KeybindAddon.lua 
