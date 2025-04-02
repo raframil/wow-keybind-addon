@@ -14,7 +14,6 @@ local function FindSlotByKeybind(key)
     
     -- Special case for CTRL bindings
     if key:match("^CTRL%-[123]$") then
-        -- Extract the number
         local num = key:match("CTRL%-(%d)")
         if num then
             local buttonIndex = tonumber(num)
@@ -28,7 +27,6 @@ local function FindSlotByKeybind(key)
     
     -- Map of all action bars and their slot offsets
     local actionBars = {
-        -- Main bars (1-6)
         {prefix = "ACTIONBUTTON", offset = 0},       -- Bar 1 (1-12)
         {prefix = "MULTIACTIONBAR1BUTTON", offset = 12},  -- Bar 2 (13-24)
         {prefix = "MULTIACTIONBAR3BUTTON", offset = 24},  -- Bar 3 (25-36)
@@ -41,7 +39,6 @@ local function FindSlotByKeybind(key)
     local bindingAction = GetBindingByKey(key)
     if bindingAction then
         print("KeybindAddon: Found binding action via GetBindingByKey: " .. bindingAction)
-        -- Check if it's an action button binding
         for _, bar in ipairs(actionBars) do
             for buttonIndex = 1, 12 do
                 if bindingAction == bar.prefix .. buttonIndex then
@@ -57,11 +54,9 @@ local function FindSlotByKeybind(key)
     local action = GetBindingAction(key, true)
     if action and action ~= "" then
         print("KeybindAddon: Direct binding action found via GetBindingAction: " .. action)
-        -- Extract button index and prefix from the action
         local prefix, buttonIndex = action:match("(.+)(%d+)$")
         if prefix and buttonIndex then
             buttonIndex = tonumber(buttonIndex)
-            -- Find matching action bar
             for _, bar in ipairs(actionBars) do
                 if prefix == bar.prefix then
                     local slot = buttonIndex + bar.offset
@@ -77,20 +72,16 @@ local function FindSlotByKeybind(key)
     for _, bar in ipairs(actionBars) do
         for buttonIndex = 1, 12 do
             local buttonName = bar.prefix .. buttonIndex
-            -- GetBindingKey can return multiple bindings per button
             for bindingIndex = 1, 10 do  -- Check up to 10 possible bindings per button
                 local binding = select(bindingIndex, GetBindingKey(buttonName))
                 if binding then
-                    -- Normalize the binding for comparison
                     binding = binding:upper()
                         :gsub("SHIFT%+", "SHIFT%-")
                         :gsub("CTRL%+", "CTRL%-")
                         :gsub("ALT%+", "ALT%-")
                     
-                    -- Show debug info
                     print("KeybindAddon: Checking " .. buttonName .. " with binding '" .. binding .. "'")
                     
-                    -- Attempt to compare normalized forms
                     if binding == key then
                         local slot = buttonIndex + bar.offset
                         print("KeybindAddon: Found match! Slot: " .. slot)
@@ -106,7 +97,7 @@ local function FindSlotByKeybind(key)
                         return slot
                     end
                 else
-                    break  -- No more bindings for this button
+                    break
                 end
             end
         end
@@ -124,30 +115,24 @@ local function ParseCSV(csvString)
     for line in csvString:gmatch("[^\r\n]+") do
         local key, spellInput = line:match("([^,]+),(.+)")
         if key and spellInput then
-            -- Trim whitespace
             key = key:gsub("^%s*(.-)%s*$", "%1")
             spellInput = spellInput:gsub("^%s*(.-)%s*$", "%1")
             
             print("KeybindAddon: Processing line: '" .. key .. "', '" .. spellInput .. "'")
             
-            -- Check for CTRL keys specifically
             local isCtrlKey = key:upper():match("CTRL")
             if isCtrlKey then
                 print("KeybindAddon: Detected CTRL key, ensuring proper format")
-                -- Make sure CTRL keys are properly formatted
                 key = key:upper()
-                    :gsub("CTRL%+", "CTRL%-") -- Standardize to use hyphen format
-                    :gsub("CTRL%s+", "CTRL%-") -- Handle space format
-                
+                    :gsub("CTRL%+", "CTRL%-")
+                    :gsub("CTRL%s+", "CTRL%-")
                 print("KeybindAddon: Normalized CTRL key to '" .. key .. "'")
             end
             
-            -- Find the slot for this keybind
             local slot = FindSlotByKeybind(key)
             if slot then
                 local spellId = tonumber(spellInput)
                 if not spellId then
-                    -- If it's not a number, treat it as a spell name
                     local spellInfo = C_Spell.GetSpellInfo(spellInput)
                     if spellInfo then
                         spellId = spellInfo.spellID
@@ -163,16 +148,13 @@ local function ParseCSV(csvString)
             else
                 print("KeybindAddon: Could not find action slot for key '" .. key .. "'")
                 
-                -- Special diagnostics for CTRL keys
                 if isCtrlKey then
                     local num = key:match("[Cc][Tt][Rr][Ll].?(%d)")
                     if num then
-                        -- Map CTRL+1, CTRL+2, CTRL+3 to Bar 3 (Right Bar 1)
-                        -- Bar 3 uses MULTIACTIONBAR3BUTTON and starts at slot 25
                         local suggestedSlot = tonumber(num) + 24
                         print("KeybindAddon: CTRL+" .. num .. " should map to slot " .. suggestedSlot .. " (Bar 3/MULTIACTIONBAR3BUTTON" .. num .. ")")
                         print("KeybindAddon: Using forced mapping for CTRL key")
-                        -- Force map the key for CTRL bindings
+                        
                         local spellIdValue = tonumber(spellInput)
                         if not spellIdValue then
                             local spellInfo = C_Spell.GetSpellInfo(spellInput)
@@ -203,14 +185,12 @@ local function PlaceSpells(bindings)
     
     print("KeybindAddon: Placing spells on action bars...")
     
-    -- Create a sorted list of slots to process them in order
     local slots = {}
     for slot in pairs(bindings) do
         table.insert(slots, slot)
     end
     table.sort(slots)
     
-    -- Process one spell at a time
     local currentIndex = 1
     local function ProcessNextSpell()
         local slot = slots[currentIndex]
@@ -222,13 +202,10 @@ local function PlaceSpells(bindings)
         local spellId = bindings[slot]
         print("KeybindAddon: Processing slot " .. slot .. " for spell ID " .. spellId)
         
-        -- Create a spell object and ensure it's loaded
         local spell = Spell:CreateFromSpellID(spellId)
         spell:ContinueOnSpellLoad(function()
-            -- Pick up the spell directly using its ID
             C_Spell.PickupSpell(spellId)
             
-            -- Check if something is on the cursor
             if GetCursorInfo() then
                 PlaceAction(slot)
                 local spellInfo = C_Spell.GetSpellInfo(spellId)
@@ -238,16 +215,13 @@ local function PlaceSpells(bindings)
                 print("KeybindAddon: Could not pick up spell with ID " .. spellId)
             end
             
-            -- Clear cursor just in case
             ClearCursor()
             
-            -- Process next spell after a short delay
             currentIndex = currentIndex + 1
             C_Timer.After(0.1, ProcessNextSpell)
         end)
     end
     
-    -- Start processing spells
     ProcessNextSpell()
 end
 
@@ -351,13 +325,7 @@ end
 -- Create dialog for external links
 StaticPopupDialogs["AUTOKEYBINDER_EXTERNAL_LINK"] = {
     text = "Copy this link to visit the keybind planner:\n",
-    -- button1 = "Copy Link",
     button2 = "Cancel",
-    -- OnAccept = function(self)
-    --     local linkText = self.editBox:GetText()
-    --     CopyToClipboard(linkText)
-    --     print("|cff33ff99AutoKeybinder:|r Link copied to clipboard.")
-    -- end,
     hasEditBox = true,
     editBoxWidth = 350,
     OnShow = function(self, data)
