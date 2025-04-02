@@ -4,12 +4,9 @@ A World of Warcraft addon that automatically sets up keybindings for your charac
 
 ## Features
 
-- Automatically sets up keybindings when you log in or change specializations
 - Supports multiple specializations through CSV configuration
 - Slash commands for manual keybinding setup
 - Saves bindings to your character's binding set
-- Easy configuration through CSV files
-- In-game UI for editing and managing bindings
 
 ## Installation
 
@@ -20,10 +17,8 @@ A World of Warcraft addon that automatically sets up keybindings for your charac
 ## Usage
 
 ### In-Game UI
-Use `/autokb config` or `/akb config` to open the configuration window. The window includes:
+Use `/autokb` or `/akb` to open the configuration window. The window includes:
 - A text area where you can paste your CSV data
-- Save button to save the current CSV to file
-- Load button to load the saved CSV from file
 - Apply button to immediately apply the current bindings
 
 ### CSV Format
@@ -36,34 +31,13 @@ Example:
 1,Incinerate
 Shift+1,Summon Infernal
 Ctrl+Q,Soulstone
-Mouse 4,Demonic Circle
+R,Demonic Circle
 ```
 
 ### Key Format
 - Regular keys: `1`, `2`, `Q`, `E`, etc.
 - Modifier keys: `Shift+`, `Ctrl+`, `Alt+`
 - Mouse buttons: `Mouse 4`, `Mouse 5`, etc.
-
-### Automatic Application
-The addon will automatically set up your keybindings when:
-- You log into the game
-- You change your specialization
-
-### Manual Application
-You can also manually trigger the keybinding setup using these slash commands:
-- `/autokb` or `/akb` - Applies the current bindings
-- `/autokb config` or `/akb config` - Opens the configuration window
-
-## Current Support
-
-Currently supports:
-- Warlock: Destruction spec
-
-## Adding More Specializations
-
-To add support for more specializations:
-1. Create a new CSV file for the specialization (e.g., `affliction.csv`)
-2. Add the appropriate specialization check in the event handler in `AutoKeybinder.lua`
 
 ## Note
 

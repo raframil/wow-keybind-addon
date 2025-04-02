@@ -254,7 +254,7 @@ end
 -- Create simple UI frame
 local function CreateUI()
     local f = CreateFrame("Frame", "KeybindAddonFrame", UIParent, "BackdropTemplate")
-    f:SetSize(800, 600)
+    f:SetSize(500, 400)
     f:SetPoint("CENTER")
     f:SetBackdrop({
         bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -274,12 +274,12 @@ local function CreateUI()
     -- Title
     local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOP", 0, -20)
-    title:SetText("KeybindAddon")
+    title:SetText("AutoKeybinder")
 
     -- Instructions
     local instructions = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     instructions:SetPoint("TOP", 0, -45)
-    instructions:SetText("Format: key,spellid\nExample: 1,116858")
+    instructions:SetText("Format: key,SPELL_NAME\nExample: 1,Chaos Bolt")
 
     -- Close button
     local closeButton = CreateFrame("Button", nil, f, "UIPanelCloseButton")
@@ -287,19 +287,20 @@ local function CreateUI()
 
     -- Create scroll frame for text input
     local scrollFrame = CreateFrame("ScrollFrame", "KeybindAddonScrollFrame", f, "InputScrollFrameTemplate")
-    scrollFrame:SetSize(350, 250)
-    scrollFrame:SetPoint("TOP", 0, -70)
+    scrollFrame:SetSize(300, 200)
+    scrollFrame:SetPoint("TOP", 0, -100)
     
     -- Get the edit box from the scroll frame
     local editBox = scrollFrame.EditBox
     editBox:SetFontObject(ChatFontNormal)
-    editBox:SetWidth(350)
+    editBox:SetWidth(300)
     editBox:SetMultiLine(true)
     editBox:SetAutoFocus(false)
     editBox:SetScript("OnEscapePressed", function() f:Hide() end)
+    editBox:SetCountInvisibleLetters(false)
     
     -- Set default text with examples of both ID and name
-    editBox:SetText("1,Chaos Bolt\n2,Conflagrate\n3,Immolate")
+    -- editBox:SetText("1,Chaos Bolt\n2,Conflagrate\n3,Immolate")
 
     -- Apply button
     local applyButton = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
@@ -317,9 +318,60 @@ local function CreateUI()
             end
         end
     end)
+    
+    -- Add a subtle link to the keybind planner spreadsheet
+    local linkButton = CreateFrame("Button", nil, f)
+    linkButton:SetSize(300, 20)
+    linkButton:SetPoint("BOTTOM", 0, 15)
+    
+    local linkText = linkButton:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    linkText:SetPoint("CENTER")
+    linkText:SetText("Need help with keybinds? Click here.")
+    linkText:SetTextColor(0.5, 0.7, 1.0)
+    
+    linkButton:SetScript("OnClick", function()
+        StaticPopup_Show("AUTOKEYBINDER_EXTERNAL_LINK", "https://docs.google.com/spreadsheets/d/1mGMkLzNWzreBuRsGgZc5bhMcZFSubhQaBm40_xuI8z4/edit?usp=sharing")
+    end)
+    
+    linkButton:SetScript("OnEnter", function(self)
+        linkText:SetTextColor(0.7, 0.9, 1.0)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText("Open The War Within Keybind Planner")
+        GameTooltip:Show()
+    end)
+    
+    linkButton:SetScript("OnLeave", function(self)
+        linkText:SetTextColor(0.5, 0.7, 1.0)
+        GameTooltip:Hide()
+    end)
 
     return f
 end
+
+-- Create dialog for external links
+StaticPopupDialogs["AUTOKEYBINDER_EXTERNAL_LINK"] = {
+    text = "Copy this link to visit the keybind planner:\n",
+    -- button1 = "Copy Link",
+    button2 = "Cancel",
+    -- OnAccept = function(self)
+    --     local linkText = self.editBox:GetText()
+    --     CopyToClipboard(linkText)
+    --     print("|cff33ff99AutoKeybinder:|r Link copied to clipboard.")
+    -- end,
+    hasEditBox = true,
+    editBoxWidth = 350,
+    OnShow = function(self, data)
+        local text = self.text:GetText()
+        local url = self.text.text_arg1
+        self.editBox:SetText(url or "")
+        self.editBox:SetFocus()
+        self.editBox:HighlightText()
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    preferredIndex = 3,
+}
 
 -- Create UI frame
 local uiFrame = CreateUI()
@@ -379,6 +431,7 @@ end
 
 -- Slash commands
 SLASH_KEYBIND1 = "/autokb"
+SLASH_KEYBIND2 = "/akb"
 SlashCmdList["KEYBIND"] = function(msg)
     if msg == "" then
         uiFrame:Show()
